@@ -1,0 +1,242 @@
+name: gridsentinel
+x-application: &application
+  build:
+    context: .
+    dockerfile: docker/Dockerfiles/application.Dockerfile
+  image: gridsentinel:0.1.0
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 40s
+  read_only: true
+  tmpfs: [/tmp]
+  volumes:
+    - app-data:/app/.local
+  environment: &app-env
+    GS_ENVIRONMENT: ${GS_ENVIRONMENT:-development}
+    GS_APPLICATION_ENVIRONMENT: ${GS_ENVIRONMENT:-development}
+    GS_MYSQL_HOST: mysql
+    GS_MYSQL_PORT: 3306
+    GS_MYSQL_USER: gridsentinel
+    GS_MYSQL_DATABASE: gridsentinel
+    GS_MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+    GS_RABBITMQ_PASSWORD_FILE: /run/secrets/rabbitmq_password
+    GS_RABBITMQ_HOST: rabbitmq
+    GS_RABBITMQ_PORT: 5672
+    GS_REDIS_PASSWORD_FILE: /run/secrets/redis_password
+    GS_REDIS_HOST: redis
+    GS_REDIS_PORT: 6379
+    GS_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    GS_API_HOST: 0.0.0.0
+    GS_API_PORT: 8000
+    GS_TENANT_ID: ${GS_TENANT_ID:-demo}
+  secrets: [mysql_password, rabbitmq_password, redis_password]
+  networks: [internal]
+  depends_on:
+    mysql: {condition: service_healthy}
+    migrate: {condition: service_completed_successfully}
+  mem_limit: 512m
+  cpus: 1.0
+services:
+  mysql:
+    image: ${GS_MYSQL_IMAGE:-mysql@sha256:0744ee5ef89ce6ccfa13de3e579fe6b9e27f93dd70da9c06d2c908b1b193fb8d}
+    command: [--mysql-native-password=ON, --character-set-server=utf8mb4, --collation-server=utf8mb4_0900_ai_ci, --default-time-zone=+00:00]
+    environment:
+      MYSQL_DATABASE: gridsentinel
+      MYSQL_USER: gridsentinel
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    secrets: [mysql_password, mysql_root_password, grafana_mysql_password]
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/initialize.sh:/docker-entrypoint-initdb.d/01-users.sh:ro
+    healthcheck:
+      test: [CMD, mysqladmin, ping, -h, localhost]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 30s
+    restart: unless-stopped
+    networks: [internal]
+    mem_limit: 1g
+    cpus: 2.0
+  kafka:
+    image: ${GS_KAFKA_IMAGE:-apache/kafka:4.1.0}
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes: [kafka-data:/var/lib/kafka/data]
+    healthcheck:
+      test: [CMD-SHELL, /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+    networks: [internal]
+    mem_limit: 1500m
+    cpus: 2.0
+  rabbitmq:
+    image: rabbitmq:4.1.4-management
+    entrypoint: [/bin/sh, /opt/gridsentinel/start.sh]
+    environment: {RABBITMQ_DEFAULT_USER: gridsentinel}
+    secrets: [rabbitmq_password]
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./docker/rabbitmq/start.sh:/opt/gridsentinel/start.sh:ro
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [internal]
+    mem_limit: 512m
+  redis:
+    image: redis:7.4.6-alpine
+    entrypoint: [/bin/sh, /opt/gridsentinel/start.sh]
+    secrets: [redis_password]
+    volumes: [./docker/redis/start.sh:/opt/gridsentinel/start.sh:ro]
+    healthcheck:
+      test: [CMD-SHELL, REDISCLI_AUTH=$$(cat /run/secrets/redis_password) redis-cli ping]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks: [internal]
+    mem_limit: 320m
+  migrate:
+    <<: *application
+    command: [python, scripts/migrate.py]
+    restart: "no"
+    depends_on: {mysql: {condition: service_healthy}}
+  api:
+    <<: *application
+    command: [python, -m, gridsentinel, api]
+    healthcheck:
+      test: [CMD, python, -m, gridsentinel, check-health]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  background-worker:
+    <<: *application
+    command: [python, -m, gridsentinel, jobs]
+    depends_on:
+      mysql: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+      rabbitmq: {condition: service_healthy}
+  scheduler:
+    <<: *application
+    command: [python, -m, gridsentinel, scheduler]
+  event-normalizer:
+    <<: *application
+    command: [python, -m, gridsentinel, telemetry]
+    profiles: [pipelines]
+    depends_on:
+      mysql: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+      kafka: {condition: service_healthy}
+  hes-connector:
+    <<: *application
+    command: [python, -m, gridsentinel, connector, --source, hes]
+    profiles: [connectors]
+  mdms-connector:
+    <<: *application
+    command: [python, -m, gridsentinel, connector, --source, mdms]
+    profiles: [connectors]
+  network-connector:
+    <<: *application
+    command: [python, -m, gridsentinel, connector, --source, network]
+    profiles: [connectors]
+  meter-health-worker:
+    <<: *application
+    command: [python, -m, gridsentinel, sweep]
+    profiles: [pipelines]
+  incident-engine:
+    <<: *application
+    command: [python, -m, gridsentinel, correlate]
+    profiles: [pipelines]
+  ml-trainer:
+    <<: *application
+    command: [python, -m, gridsentinel, jobs, --queue, q.model.train]
+    profiles: [ml]
+  ml-inference:
+    <<: *application
+    command: [python, -m, gridsentinel, inference]
+    profiles: [ml]
+  log-collector:
+    <<: *application
+    command: [python, -m, gridsentinel, collect-logs]
+  web-ui:
+    image: nginxinc/nginx-unprivileged:1.28.0-alpine
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+      - ./docker/nginx/web.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    networks: [internal]
+    mem_limit: 64m
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+  reverse-proxy:
+    image: nginxinc/nginx-unprivileged:1.28.0-alpine
+    ports: ["127.0.0.1:${GS_HTTP_PORT:-8080}:8080"]
+    volumes:
+      - ./docker/nginx/development.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/proxy.conf:/etc/nginx/gs-proxy.conf:ro
+    networks: [internal, edge]
+    depends_on: [api, web-ui]
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 64m
+  grafana:
+    image: grafana/grafana:12.2.0
+    environment:
+      GF_SECURITY_ADMIN_USER: gs_grafana_admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_password
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SECURITY_ALLOW_EMBEDDING: "false"
+      GF_INSTALL_PLUGINS: ""
+    secrets: [grafana_password, grafana_mysql_password]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["127.0.0.1:3000:3000"]
+    networks: [internal, edge]
+    restart: unless-stopped
+    mem_limit: 256m
+    profiles: [observability]
+volumes:
+  mysql-data:
+  kafka-data:
+  rabbitmq-data:
+  grafana-data:
+  app-data:
+networks:
+  internal: {internal: true}
+  edge: {}
+secrets:
+  mysql_root_password: {file: .local/secrets/mysql_root_password}
+  mysql_password: {file: .local/secrets/mysql_password}
+  rabbitmq_password: {file: .local/secrets/rabbitmq_password}
+  redis_password: {file: .local/secrets/redis_password}
+  grafana_password: {file: .local/secrets/grafana_password}
+  grafana_mysql_password: {file: .local/secrets/grafana_mysql_password}

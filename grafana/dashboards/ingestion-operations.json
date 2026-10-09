@@ -1,0 +1,117 @@
+{
+  "uid": "gs-ingestion-operations",
+  "title": "GridSentinel | Ingestion Operations",
+  "description": "Durable handoff checkpoints and MySQL outbox backlog. Missing telemetry is not represented as zero Kafka lag.",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "tags": [
+    "gridsentinel",
+    "pilot",
+    "tenant-isolated"
+  ],
+  "timezone": "utc",
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Durable connector checkpoints",
+      "type": "table",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT component,stream,last_handoff_at,watermark FROM v_ingestion_operations WHERE component<>'outbox' ORDER BY component,stream LIMIT 100",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Pending outbox events",
+      "type": "table",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT stream,pending_events,published_events,last_handoff_at FROM v_ingestion_operations WHERE component='outbox' ORDER BY pending_events DESC LIMIT 100",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "GridSentinel Admin",
+      "type": "link",
+      "url": "http://localhost:8080",
+      "targetBlank": true
+    }
+  ]
+}

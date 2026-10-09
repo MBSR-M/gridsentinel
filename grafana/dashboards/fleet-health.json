@@ -1,0 +1,229 @@
+{
+  "uid": "gs-fleet-health",
+  "title": "GridSentinel | Fleet Health",
+  "description": "Observed meter states. Communication score is based on stored observations; unknown meters remain visible.",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "tags": [
+    "gridsentinel",
+    "pilot",
+    "tenant-isolated"
+  ],
+  "timezone": "utc",
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Registered meters",
+      "type": "stat",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT SUM(meter_count) AS registered_meters FROM v_fleet_health",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Active meters",
+      "type": "stat",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT SUM(active_meter_count) AS active_meters FROM v_fleet_health",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Health distribution",
+      "type": "piechart",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT health_status,meter_count FROM v_fleet_health ORDER BY health_status",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": [
+          "name",
+          "percent"
+        ],
+        "reduceOptions": {
+          "values": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Observed health details",
+      "type": "table",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT health_status,meter_count,communication_score,observed_at FROM v_fleet_health ORDER BY meter_count DESC LIMIT 20",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "GridSentinel Admin",
+      "type": "link",
+      "url": "http://localhost:8080",
+      "targetBlank": true
+    }
+  ]
+}

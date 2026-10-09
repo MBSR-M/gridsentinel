@@ -1,0 +1,122 @@
+{
+  "uid": "gs-prediction-monitoring",
+  "title": "GridSentinel | Recovery Prediction Monitoring",
+  "description": "Stored prediction volume, values and confidence. Synthetic evaluation is not proof of real-world accuracy.",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "tags": [
+    "gridsentinel",
+    "pilot",
+    "tenant-isolated"
+  ],
+  "timezone": "utc",
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Prediction volume",
+      "type": "timeseries",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT observed_at AS time,prediction_type AS metric,SUM(prediction_count) AS value FROM v_prediction_monitoring WHERE $__timeFilter(observed_at) GROUP BY observed_at,prediction_type ORDER BY time LIMIT 10000",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Prediction summaries",
+      "type": "table",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT observed_at,prediction_type,model_id,prediction_count,mean_predicted_value,mean_confidence FROM v_prediction_monitoring WHERE $__timeFilter(observed_at) ORDER BY observed_at DESC LIMIT 500",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "GridSentinel Admin",
+      "type": "link",
+      "url": "http://localhost:8080",
+      "targetBlank": true
+    }
+  ]
+}

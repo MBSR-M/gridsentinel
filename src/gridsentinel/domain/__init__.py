@@ -1,0 +1,1 @@
+"""Validated operational domain contracts."""

@@ -140,7 +140,7 @@ celerybeat.pid
 
 # RabbitMQ
 mnesia/
-rabbitmq/
+/rabbitmq/
 rabbitmq-data/
 
 # ActiveMQ
@@ -204,6 +204,13 @@ cython_debug/
 # .vscode/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
+
+# GridSentinel deployment secrets and generated evidence
+.local/
+secrets/
+*.pem
+*.key
+*.sqlite
 
 # Ruff stuff:
 .ruff_cache/

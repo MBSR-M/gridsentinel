@@ -1,0 +1,212 @@
+{
+  "uid": "gs-incident-sla",
+  "title": "GridSentinel | Incident and SLA Operations",
+  "description": "Observed acknowledgement/resolution latency. Contractual compliance is unknown without an approved customer SLA definition.",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "tags": [
+    "gridsentinel",
+    "pilot",
+    "tenant-isolated"
+  ],
+  "timezone": "utc",
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Incident volume",
+      "type": "timeseries",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT observed_at AS time,severity AS metric,SUM(incident_count) AS value FROM v_incident_sla WHERE $__timeFilter(observed_at) GROUP BY observed_at,severity ORDER BY time LIMIT 10000",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Observed response times",
+      "type": "table",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT severity,status,SUM(incident_count) AS incidents,AVG(mean_ack_minutes) AS acknowledgement_minutes,AVG(mean_resolution_minutes) AS resolution_minutes,MAX(oldest_open_minutes) AS oldest_open_minutes FROM v_incident_sla WHERE $__timeFilter(observed_at) GROUP BY severity,status ORDER BY severity,status LIMIT 100",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Approved SLA contracts",
+      "type": "stat",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT MAX(approved_sla_contracts) AS approved_sla_contracts FROM v_incident_sla",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Suspected causes",
+      "type": "table",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT suspected_root_cause,SUM(incident_count) AS incidents FROM v_incident_sla WHERE $__timeFilter(observed_at) GROUP BY suspected_root_cause ORDER BY incidents DESC LIMIT 20",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "GridSentinel Admin",
+      "type": "link",
+      "url": "http://localhost:8080",
+      "targetBlank": true
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "scope": "mysql",
+  "synthetic": true,
+  "events": 1000,
+  "duplicate_events": 0,
+  "unique_events": 1000,
+  "elapsed_seconds": 25.617250100011006,
+  "events_per_second": 39.036196160632024,
+  "latency_ms": {
+    "p50": 22.676400025375187,
+    "p95": 35.843700054101646,
+    "p99": 50.79740006476641
+  },
+  "peak_traced_memory_bytes": 3077132,
+  "measured_at": "2026-10-08T09:58:36.604839+00:00",
+  "limitations": "Single local process; validation mode excludes broker/database. No fleet-scale capacity claim."
+}

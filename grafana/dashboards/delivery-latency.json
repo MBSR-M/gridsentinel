@@ -1,0 +1,219 @@
+{
+  "uid": "gs-delivery-latency",
+  "title": "GridSentinel | HES and MDMS Delivery",
+  "description": "Latency from interval end to physical receipt. Estimated intervals are counted separately and excluded from latency.",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "tags": [
+    "gridsentinel",
+    "pilot",
+    "tenant-isolated"
+  ],
+  "timezone": "utc",
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HES receipt latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT observed_at AS time,source_system AS metric,mean_hes_latency_seconds AS value FROM v_delivery_latency WHERE $__timeFilter(observed_at) ORDER BY time LIMIT 10000",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "MDMS receipt latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT observed_at AS time,source_system AS metric,mean_mdms_latency_seconds AS value FROM v_delivery_latency WHERE $__timeFilter(observed_at) ORDER BY time LIMIT 10000",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Recorded estimated intervals",
+      "type": "timeseries",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT observed_at AS time,SUM(estimated_intervals) AS estimated_intervals FROM v_delivery_latency WHERE $__timeFilter(observed_at) GROUP BY observed_at ORDER BY time LIMIT 10000",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Recorded missing intervals",
+      "type": "timeseries",
+      "datasource": {
+        "type": "mysql",
+        "uid": "gs-reporting"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "gs-reporting"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT observed_at AS time,SUM(observed_missing_intervals) AS missing_intervals FROM v_delivery_latency WHERE $__timeFilter(observed_at) GROUP BY observed_at ORDER BY time LIMIT 10000",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Not observed",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "GridSentinel Admin",
+      "type": "link",
+      "url": "http://localhost:8080",
+      "targetBlank": true
+    }
+  ]
+}

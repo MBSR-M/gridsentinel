@@ -1,0 +1,17 @@
+{
+  "scope": "validation",
+  "synthetic": true,
+  "events": 10000,
+  "duplicate_events": 0,
+  "unique_events": 10000,
+  "elapsed_seconds": 2.4033432999858633,
+  "events_per_second": 4160.870400853187,
+  "latency_ms": {
+    "p50": 0.14000001829117537,
+    "p95": 0.22310006897896528,
+    "p99": 0.37789996713399887
+  },
+  "peak_traced_memory_bytes": 361815,
+  "measured_at": "2026-10-08T09:57:56.532791+00:00",
+  "limitations": "Single local process; validation mode excludes broker/database. No fleet-scale capacity claim."
+}

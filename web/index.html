@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="GridSentinel Enterprise smart meter operations intelligence">
+  <title>GridSentinel · Operations intelligence</title>
+  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/themes.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <script type="module" src="/js/app.js?v=0.1.0"></script>
+</head>
+<body>
+  <a class="skip-link" href="#page">Skip to content</a>
+  <section id="login" class="login-layout" aria-label="Sign in">
+    <aside class="login-story">
+      <a class="brand" href="#overview"><img src="/assets/mark.svg" alt=""><span>GridSentinel<small>ENTERPRISE</small></span></a>
+      <div class="story-copy"><span class="eyebrow">SMART METER OPERATIONS INTELLIGENCE</span><h1>See the signal.<br>Understand the failure.</h1><p>From a single meter to a shared outage.<br>One workspace for evidence, recovery, and action.</p></div>
+      <svg class="network-art" viewBox="0 0 600 240" aria-hidden="true"><defs><radialGradient id="glow"><stop stop-color="#2be2bb" stop-opacity=".35"/><stop offset="1" stop-color="#2be2bb" stop-opacity="0"/></radialGradient></defs><circle cx="300" cy="115" r="150" fill="url(#glow)"/><g stroke="#29515c" stroke-width="1" fill="none"><path d="M65 65L170 110L300 65L430 110L535 65M65 180L170 110L300 180L430 110L535 180M170 110L170 215M430 110L430 215M300 65L300 180"/></g><g fill="#162b38" stroke="#38cbb4" stroke-width="2"><rect x="283" y="48" width="34" height="34" rx="8"/><circle cx="170" cy="110" r="11"/><circle cx="430" cy="110" r="11"/><circle cx="300" cy="180" r="8"/></g><g fill="#62878b"><circle cx="65" cy="65" r="5"/><circle cx="535" cy="65" r="5"/><circle cx="65" cy="180" r="5"/><circle cx="535" cy="180" r="5"/><circle cx="170" cy="215" r="5"/><circle cx="430" cy="215" r="5"/></g><path d="M301 55l-7 12h6l-1 8 9-13h-7z" fill="#4ce4c4"/></svg>
+      <div class="story-footer"><span>Evidence first</span><span>Tenant scoped</span><span>Audited actions</span></div>
+    </aside>
+    <div class="login-pane"><div class="login-card">
+      <div class="login-kicker">OPERATIONS WORKSPACE</div><h2>Welcome back.</h2><p class="muted">Sign in to continue monitoring your fleet.</p>
+      <form id="login-form">
+        <label for="tenant">Tenant ID</label><input id="tenant" name="tenant_id" autocomplete="organization" required maxlength="64" placeholder="Your deployment tenant">
+        <label for="username">Username</label><input id="username" name="username" autocomplete="username" required maxlength="128" placeholder="Your username">
+        <label for="password">Password</label><div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="128"><button id="toggle-password" type="button" aria-label="Show password">Show</button></div>
+        <div id="login-error" class="form-error" role="alert" hidden></div>
+        <button class="button primary login-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="login-help">Access is provisioned by your platform administrator.</p>
+    </div><span class="login-version">GRIDSENTINEL ENTERPRISE · OPERATIONS INTELLIGENCE</span></div>
+  </section>
+  <div id="workspace" class="app-layout" hidden>
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#overview"><img src="/assets/mark.svg" alt=""><span>GridSentinel<small>ENTERPRISE</small></span></a>
+      <div class="workspace-label"><span class="workspace-dot"></span><span id="tenant-label">Workspace</span><span class="scope-tag">TENANT</span></div>
+      <nav id="navigation" aria-label="Main navigation"></nav>
+      <div class="sidebar-footer"><div class="avatar" id="user-avatar">GS</div><div class="user-summary"><strong id="user-name"></strong><small id="user-role"></small></div><button id="sign-out" class="icon-button" title="Sign out" aria-label="Sign out"></button></div>
+    </aside>
+    <div class="main-column">
+      <header class="topbar"><div class="breadcrumb"><button id="menu-toggle" class="icon-button mobile-menu" aria-label="Toggle navigation"></button><span>Workspace</span><span class="breadcrumb-separator">/</span><strong id="breadcrumb-current">Overview</strong></div><div class="topbar-tools"><span class="tenant-indicator" id="scope-label"></span><button id="density-toggle" class="icon-button" title="Toggle compact density" aria-label="Toggle compact density"></button><button id="theme-toggle" class="icon-button" title="Toggle light or dark theme" aria-label="Toggle light or dark theme"></button><button id="refresh-page" class="icon-button" title="Refresh current view" aria-label="Refresh current view"></button><a href="#profile" class="topbar-avatar" id="topbar-avatar" aria-label="My profile">GS</a></div></header>
+      <main id="page" class="page" tabindex="-1" aria-live="polite"></main>
+      <footer class="page-footer"><span>GridSentinel Enterprise</span><span id="freshness">Waiting for observations</span><span>All operational timestamps in UTC</span></footer>
+    </div>
+  </div>
+  <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-title"><div class="dialog-header"><div><span id="detail-eyebrow" class="eyebrow">INVESTIGATION</span><h2 id="detail-title"></h2></div><button id="detail-close" class="icon-button" aria-label="Close details">×</button></div><div id="detail-content" class="dialog-content"></div></dialog>
+  <dialog id="action-dialog" class="action-dialog" aria-labelledby="action-title"><div class="dialog-header"><h2 id="action-title"></h2><button id="action-close" class="icon-button" aria-label="Close action">×</button></div><div id="action-content" class="dialog-content"></div></dialog>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+</body>
+</html>

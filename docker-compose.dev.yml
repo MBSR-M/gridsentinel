@@ -1,0 +1,17 @@
+services:
+  mysql:
+    ports: ["127.0.0.1:13306:3306"]
+  rabbitmq:
+    ports: ["127.0.0.1:15672:5672"]
+  redis:
+    ports: ["127.0.0.1:16379:6379"]
+  kafka:
+    ports: ["127.0.0.1:19092:19092"]
+    environment:
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:19092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://127.0.0.1:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+networks:
+  internal:
+    internal: false
